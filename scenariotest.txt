@@ -1,0 +1,202 @@
+📌 Apa itu Skenario Test di k6?
+Di k6, skenario adalah cara untuk menentukan bagaimana virtual user (VU) akan berjalan:
+
+Berapa banyak VU
+Berapa lama
+Bagaimana pola naik/turunnya VU
+Apakah looping, ramp-up, ramp-down, dsb
+
+Semua diatur di options.scenarios atau mode sederhana seperti vus + duration.
+
+✅ Jenis-jenis skenario di k6
+Berikut yang paling umum:
+
+Nama Skenario	          Keterangan
+constant-vus	          Menjalankan sejumlah VU yang konstan selama durasi tertentu.
+ramping-vus	              Menambah/mengurangi jumlah VU secara bertahap.
+per-vu-iterations	      Setiap VU menjalankan sejumlah iterasi tertentu.
+shared-iterations	      Semua VU berbagi total iterasi tertentu.
+constant-arrival-rate	  Menjalankan sejumlah request per waktu tertentu.
+ramping-arrival-rate	  Mengubah laju kedatangan request secara bertahap.
+
+✨ Contoh Script Skenario
+🔹 1. Constant VUs (sederhana)
+
+export const options = {
+  vus: 10,          // 10 Virtual Users
+  duration: '30s',  // berjalan selama 30 detik
+};
+
+🔹 2. Ramping VUs (naik turun)
+
+export const options = {
+  scenarios: {
+    ramping_test: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '10s', target: 10 }, // naik ke 10 VU
+        { duration: '20s', target: 50 }, // naik ke 50 VU
+        { duration: '10s', target: 0 },  // turun ke 0
+      ],
+      gracefulRampDown: '0s',
+    },
+  },
+};
+
+🔹 3. Per VU Iterations
+
+export const options = {
+  scenarios: {
+    my_test: {
+      executor: 'per-vu-iterations',
+      vus: 5,
+      iterations: 10, // setiap VU menjalankan 10 iterasi
+      maxDuration: '1m',
+    },
+  },
+};
+
+🔹 4. Constant Arrival Rate (kontrol request per detik)
+
+export const options = {
+  scenarios: {
+    rate_test: {
+      executor: 'constant-arrival-rate',
+      rate: 20,              // 20 iterations per second
+      timeUnit: '1s',
+      duration: '30s',
+      preAllocatedVUs: 50,   // minimal VU
+      maxVUs: 100,           // maksimal VU
+    },
+  },
+};
+
+🔹 5. Ramping Arrival Rate
+
+export const options = {
+  scenarios: {
+    ramping_rate: {
+      executor: 'ramping-arrival-rate',
+      startRate: 10,
+      timeUnit: '1s',
+      preAllocatedVUs: 20,
+      maxVUs: 100,
+      stages: [
+        { target: 50, duration: '30s' },
+        { target: 10, duration: '30s' },
+      ],
+    },
+  },
+};
+
+📥 Cara Menjalankan
+Simpan script misalnya test.js, lalu jalankan:
+
+k6 run test.js
+
+Atau pakai dashboard:
+
+k6 run --out dashboard test.js
+
+
+✅ Mau saya bantu bikin skenario spesifik?
+Misalnya:
+
+Kamu mau simulasi login → browse → checkout
+Atau mau soak test, ramp-up, ramp-down
+Atau gabungan beberapa skenario
+Kalau iya, tinggal bilang aja detailnya:
+👉 Target VU berapa? durasi berapa? pola apa yang kamu inginkan?
+
+Aku siap bantu buatin scriptnya langsung untukmu! 🚀🔥
+
+
+
+
+🎯 Jenis Performance Test & Skenario k6 yang sesuai
+✅ 1. Load Test
+👉 Tujuan: Mengukur performa aplikasi pada beban normal hingga tinggi dalam jangka waktu tertentu.
+📌 Skenario: gunakan constant-vus atau ramping-vus.
+✅ Contoh:
+
+export const options = {
+  scenarios: {
+    load_test: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 50 }, // naik ke 50 user dalam 2 menit
+        { duration: '5m', target: 50 }, // bertahan di 50 user selama 5 menit
+        { duration: '2m', target: 0 },  // turun kembali
+      ],
+    },
+  },
+};
+
+✅ 2. Stress Test
+👉 Tujuan: Mengukur batas kapasitas maksimum aplikasi dengan cara meningkatkan beban hingga sistem gagal.
+📌 Skenario: ramping-vus dengan target sangat besar, atau ramping-arrival-rate.
+✅ Contoh:
+export const options = {
+  scenarios: {
+    stress_test: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 100 },
+        { duration: '2m', target: 200 },
+        { duration: '2m', target: 400 },
+        { duration: '2m', target: 800 },
+      ],
+      gracefulStop: '30s',
+    },
+  },
+};
+✅ 3. Soak Test (Endurance Test)
+👉 Tujuan: Mengukur kestabilan sistem dalam jangka waktu lama dengan beban konstan.
+📌 Skenario: constant-vus dengan durasi panjang.
+✅ Contoh:
+export const options = {
+  scenarios: {
+    soak_test: {
+      executor: 'constant-vus',
+      vus: 50,
+      duration: '2h', // jalankan selama 2 jam
+    },
+  },
+};
+✅ 4. Spike Test
+👉 Tujuan: Melihat respon sistem ketika beban tiba-tiba naik drastis.
+📌 Skenario: ramping-vus dengan tahap awal rendah lalu langsung loncat.
+✅ Contoh:
+export const options = {
+  scenarios: {
+    spike_test: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '10s', target: 10 }, // awal santai
+        { duration: '10s', target: 200 }, // langsung loncat
+        { duration: '1m', target: 0 },   // turun lagi
+      ],
+    },
+  },
+};
+
+✅ 5. Break Point Test
+👉 Tujuan: Sama seperti stress test tapi fokus mencari titik sistem mulai gagal.
+📌 Skenario: Mirip stress test, naikkan bertahap sampai respon tidak stabil.
+✅ Contoh: (hampir sama dengan stress test tapi dengan monitoring lebih detail)
+
+📋 Ringkasan
+Jenis Test	        Executor k6	                        Contoh Pengaturan
+Load Test	        ramping-vus atau constant-vus	    Beban normal → tinggi
+Stress Test	        ramping-vus / ramping-arrival-rate	Naik terus sampai batas
+Soak Test	        constant-vus	                    Beban konstan lama
+Spike Test	        ramping-vus	                        Lonjakan mendadak
+Break Point Test	ramping-vus	                        Naik bertahap cari titik gagal
+
+💡 Cara jalankan:
+
+k6 run --out dashboard test.js
