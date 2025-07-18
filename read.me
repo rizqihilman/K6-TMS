@@ -1,0 +1,20 @@
+▶️ Menjalankan script
+k6 run test.js
+//Menjalankan file test.js dengan opsi default (output di terminal).
+
+▶️ Menjalankan dengan output ke dashboard (grafik)
+k6 run --out dashboard test.js
+//Secara default dashboard akan berjalan di http://127.0.0.1:5665.
+
+Pastikan tidak ada proses lain yang memakai port tersebut.
+
+▶️ Menjalankan dashboard dengan port kustom
+//Jika port 5665 bentrok, ganti dengan port lain (misalnya 8082):
+
+k6 run --out dashboard=http.addr=0.0.0.0:8082 test.js
+//Sekarang bukanya di: http://127.0.0.1:8082
+
+▶️ Menampilkan daftar opsi
+k6 run --help
+atau
+k6 --help
